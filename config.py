@@ -10,7 +10,7 @@ class Config:
     DB_USER = os.getenv("DB_USER", "root")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "root123")
     DB_HOST = os.getenv("DB_HOST", "localhost")
-    DB_NAME = os.getenv("DB_NAME", "quiz_platform_db")
+    DB_NAME = os.getenv("DB_NAME", "quiz_db1")
 
     SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
@@ -20,3 +20,4 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(
         minutes=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", "15"))
     )
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
