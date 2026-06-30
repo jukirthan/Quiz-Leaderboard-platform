@@ -4,11 +4,6 @@ from app.controllers import leaderboard_controller
 leaderboard_bp = Blueprint("leaderboard", __name__)
 
 
-@leaderboard_bp.route("/leaderboard", methods=["GET"])
-def leaderboard():
-    return leaderboard_controller.get_leaderboard()
-
-
 @leaderboard_bp.route("/leaderboard/quiz/<int:quiz_id>", methods=["GET"])
 def quiz_leaderboard(quiz_id):
     return leaderboard_controller.quiz_leaderboard(quiz_id)

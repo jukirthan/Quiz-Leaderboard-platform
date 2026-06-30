@@ -1,6 +1,6 @@
 from app.extensions import db
 from datetime import datetime
-from app.models.question_model import AnswerEnum
+from app.models.question import AnswerEnum
 
 
 class QuizAttempt(db.Model):

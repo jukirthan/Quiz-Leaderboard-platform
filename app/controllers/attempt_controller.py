@@ -3,14 +3,14 @@ from flask_jwt_extended import get_jwt_identity
 from datetime import datetime
 from decimal import Decimal
 from app.extensions import db
-from app.models.user_model import User
-from app.models.quiz_model import Quiz
-from app.models.question_model import Question, AnswerEnum
-from app.models.attempt_model import QuizAttempt, UserAnswer
+from app.models.user import User
+from app.models.quiz import Quiz
+from app.models.question import Question, AnswerEnum
+from app.models.attempt import QuizAttempt, UserAnswer
 
 
 def _current_user():
-    return User.query.get(int(get_jwt_identity()))
+    return User.query.get(get_jwt_identity())
 
 
 def _parse_answer(value):

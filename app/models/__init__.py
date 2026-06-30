@@ -1,5 +1,5 @@
-from app.models.user_model import User
-from app.models.category_model import Category
-from app.models.quiz_model import Quiz
-from app.models.question_model import Question, AnswerEnum
-from app.models.attempt_model import QuizAttempt, UserAnswer
+from app.models.user import User
+from app.models.category import Category
+from app.models.quiz import Quiz
+from app.models.question import Question, AnswerEnum
+from app.models.attempt import QuizAttempt, UserAnswer

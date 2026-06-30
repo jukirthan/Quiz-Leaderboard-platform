@@ -1,14 +1,14 @@
 from functools import wraps
 from flask import jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
-from app.models.user_model import User
-from app.models.quiz_model import Quiz
-from app.models.attempt_model import QuizAttempt
+from app.models.user import User
+from app.models.quiz import Quiz
+from app.models.attempt import QuizAttempt
 
 
 def _get_current_user():
     user_id = get_jwt_identity()
-    return User.query.get(int(user_id))
+    return User.query.get(user_id)
 
 
 def auth_required(fn):
@@ -54,6 +54,18 @@ def creator_required(fn):
         if user.role.value != "admin" and quiz.creator_id != user.id:
             return jsonify({"error": "Only the quiz creator can perform this action"}), 403
 
+        return fn(*args, **kwargs)
+    return wrapper
+
+
+def question_creator_required(fn):
+    """Admin only for question management (per project requirement)."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        verify_jwt_in_request()
+        user = _get_current_user()
+        if not user or user.role.value != "admin":
+            return jsonify({"error": "Only admins can manage questions"}), 403
         return fn(*args, **kwargs)
     return wrapper
 

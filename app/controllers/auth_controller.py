@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity
 from app.extensions import db, bcrypt
-from app.models.user_model import User
+from app.models.user import User
 
 
 def register():
@@ -27,7 +27,7 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    access_token = create_access_token(identity=str(user.id))
+    access_token = create_access_token(identity=user.id)
     return jsonify({"access_token": access_token, "user": user.to_dict()}), 201
 
 
@@ -46,7 +46,7 @@ def login():
     if not user.is_active:
         return jsonify({"error": "Account is deactivated"}), 403
 
-    access_token = create_access_token(identity=str(user.id))
+    access_token = create_access_token(identity=user.id)
     return jsonify({"access_token": access_token, "user": user.to_dict()}), 200
 
 
@@ -55,7 +55,7 @@ def logout():
 
 
 def profile():
-    user_id = int(get_jwt_identity())
+    user_id = get_jwt_identity()
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
