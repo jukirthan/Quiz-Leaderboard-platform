@@ -1,13 +1,13 @@
 from flask import jsonify
 from flask_jwt_extended import get_jwt_identity
-from app.models.user_model import User
-from app.models.quiz_model import Quiz
-from app.models.attempt_model import QuizAttempt
+from app.models.user import User
+from app.models.quiz import Quiz
+from app.models.attempt import QuizAttempt
 from app.controllers.attempt_controller import _quiz_leaderboard_entries
 
 
 def dashboard():
-    user_id = int(get_jwt_identity())
+    user_id = get_jwt_identity()
     user = User.query.get_or_404(user_id)
 
     created_quizzes = Quiz.query.filter_by(creator_id=user_id).order_by(Quiz.created_at.desc()).all()

@@ -1,5 +1,5 @@
 from app.extensions import db
-from app.models.category_model import Category
+from app.models.category import Category
 
 
 def seed_categories():

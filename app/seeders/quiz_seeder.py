@@ -1,8 +1,8 @@
 from app.extensions import db
-from app.models.user_model import User, RoleEnum
-from app.models.category_model import Category
-from app.models.quiz_model import Quiz
-from app.models.question_model import Question, AnswerEnum
+from app.models.user import User, RoleEnum
+from app.models.category import Category
+from app.models.quiz import Quiz
+from app.models.question import Question, AnswerEnum
 
 
 def seed_quizzes():

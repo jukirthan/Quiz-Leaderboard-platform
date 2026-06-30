@@ -1,5 +1,5 @@
 from app.extensions import db, bcrypt
-from app.models.user_model import User, RoleEnum
+from app.models.user import User, RoleEnum
 
 
 def seed_admin():
