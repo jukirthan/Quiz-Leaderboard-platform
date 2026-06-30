@@ -1,12 +1,12 @@
 from flask import request, jsonify
-from flask_jwt_extended_model import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity
 from app.extensions import db
 from app.models.user_model import User
 from app.models.quiz_model import Quiz
 
 
 def _current_user():
-    return User.query.get(get_jwt_identity())
+    return User.query.get(int(get_jwt_identity()))
 
 
 def list_quizzes():
@@ -52,7 +52,8 @@ def _current_user_optional():
     try:
         from flask_jwt_extended import verify_jwt_in_request
         verify_jwt_in_request(optional=True)
-        return User.query.get(get_jwt_identity())
+        uid = get_jwt_identity()
+        return User.query.get(int(uid)) if uid else None
     except Exception:
         return None
 
