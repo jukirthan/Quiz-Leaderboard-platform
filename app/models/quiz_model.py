@@ -10,8 +10,11 @@ class Quiz(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=True)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
+    time_limit = db.Column(db.Integer, nullable=True)
+    is_public = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    creator = db.relationship("Admin", back_populates="quizzes")
+
+    creator = db.relationship("User", back_populates="quizzes")
     category = db.relationship("Category", back_populates="quizzes")
     questions = db.relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
     attempts = db.relationship("QuizAttempt", back_populates="quiz", cascade="all, delete-orphan")
@@ -25,7 +28,10 @@ class Quiz(db.Model):
             "category_name": self.category.name if self.category else None,
             "title": self.title,
             "description": self.description,
+            "time_limit": self.time_limit,
+            "is_public": self.is_public,
             "total_marks": sum(q.marks for q in self.questions),
+            "question_count": len(self.questions),
             "created_at": self.created_at.isoformat(),
         }
 
