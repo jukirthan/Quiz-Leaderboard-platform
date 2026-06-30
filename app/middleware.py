@@ -8,7 +8,7 @@ from app.models.attempt_model import QuizAttempt
 
 def _get_current_user():
     user_id = get_jwt_identity()
-    return User.query.get(user_id)
+    return User.query.get(int(user_id))
 
 
 def auth_required(fn):

@@ -10,7 +10,10 @@ def create_app(config_class=Config):
     db.init_app(app)
     jwt.init_app(app)
     bcrypt.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
+    cors.init_app(
+        app,
+        resources={r"/api/*": {"origins": app.config.get("CORS_ORIGINS", "*")}},
+    )
 
     from app.models import User, Category, Quiz, Question, QuizAttempt, UserAnswer  # noqa: F401
 
