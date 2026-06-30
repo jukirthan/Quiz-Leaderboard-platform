@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from app.extensions import db
-from app.models.quiz import Quiz
-from app.models.question import Question, AnswerEnum
+from app.models.quiz_model import Quiz
+from app.models.question_model import Question, AnswerEnum
 
 
 def _parse_answer(value):
