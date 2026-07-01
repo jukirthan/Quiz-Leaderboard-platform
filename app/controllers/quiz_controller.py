@@ -6,7 +6,7 @@ from app.models.quiz import Quiz
 
 
 def _current_user():
-    return User.query.get(get_jwt_identity())
+    return User.query.get(int(get_jwt_identity()))
 
 
 def list_quizzes():
@@ -52,7 +52,8 @@ def _current_user_optional():
     try:
         from flask_jwt_extended import verify_jwt_in_request
         verify_jwt_in_request(optional=True)
-        return User.query.get(get_jwt_identity())
+        identity = get_jwt_identity()
+        return User.query.get(int(identity)) if identity is not None else None
     except Exception:
         return None
 

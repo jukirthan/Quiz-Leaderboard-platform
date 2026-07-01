@@ -10,7 +10,7 @@ from app.models.attempt import QuizAttempt, UserAnswer
 
 
 def _current_user():
-    return User.query.get(get_jwt_identity())
+    return User.query.get(int(get_jwt_identity()))
 
 
 def _parse_answer(value):
