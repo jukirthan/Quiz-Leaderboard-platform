@@ -7,7 +7,7 @@ from app.controllers.attempt_controller import _quiz_leaderboard_entries
 
 
 def dashboard():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get_or_404(user_id)
 
     created_quizzes = Quiz.query.filter_by(creator_id=user_id).order_by(Quiz.created_at.desc()).all()
