@@ -22,6 +22,9 @@ class User(db.Model):
     quizzes = db.relationship("Quiz", back_populates="creator", cascade="all, delete-orphan")
     attempts = db.relationship("QuizAttempt", back_populates="user", cascade="all, delete-orphan")
 
+    def is_admin(self):
+        return self.role == RoleEnum.admin
+
     def to_dict(self):
         return {
             "id": self.id,
