@@ -1,62 +1,52 @@
-from flask import request, jsonify
-from flask_jwt_extended import create_access_token, get_jwt_identity
+import os
+from flask_jwt_extended import create_access_token
 from app.extensions import db, bcrypt
 from app.models.user import User
+from app.utils import success_response, error_response
 
 
-def register():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-
-    username = data.get("username", "").strip()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
+def register_user(data):
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+    admin_code = data.get("admin_code")
 
     if not username or not email or not password:
-        return jsonify({"error": "username, email and password are required"}), 400
+        return error_response("username, email and password are required")
 
     if User.query.filter_by(email=email).first():
-        return jsonify({"error": "Email already registered"}), 409
+        return error_response("Email already registered")
 
     if User.query.filter_by(username=username).first():
-        return jsonify({"error": "Username already taken"}), 409
+        return error_response("Username already taken")
 
-    hashed_pw = bcrypt.generate_password_hash(password).decode("utf-8")
-    user = User(username=username, email=email, password=hashed_pw)
+    configured_admin_code = os.environ.get("ADMIN_SIGNUP_CODE")
+    role = "admin" if configured_admin_code and admin_code == configured_admin_code else "user"
+
+    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+    user = User(username=username, email=email, password=hashed_password, role=role)
+
     db.session.add(user)
     db.session.commit()
 
-    access_token = create_access_token(identity=str(user.id))
-    return jsonify({"access_token": access_token, "user": user.to_dict()}), 201
+    return success_response("User registered successfully", user.to_dict(), 201)
 
 
-def login():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
+def login_user(data):
+    email = data.get("email")
+    password = data.get("password")
 
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
+    if not email or not password:
+        return error_response("email and password are required")
 
     user = User.query.filter_by(email=email).first()
-    if not user or not bcrypt.check_password_hash(user.password, password):
-        return jsonify({"error": "Invalid email or password"}), 401
 
-    if not user.is_active:
-        return jsonify({"error": "Account is deactivated"}), 403
+    if not user or not bcrypt.check_password_hash(user.password, password):
+        return error_response("Invalid email or password", 401)
 
     access_token = create_access_token(identity=str(user.id))
-    return jsonify({"access_token": access_token, "user": user.to_dict()}), 200
 
-
-def logout():
-    return jsonify({"message": "Logged out successfully"}), 200
-
-
-def profile():
-    user_id = get_jwt_identity()
-    user = User.query.get(int(user_id))
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    return jsonify(user.to_dict()), 200
+    return success_response("Login successful", {
+        "token": access_token,
+        "user": user.to_dict()
+    })
