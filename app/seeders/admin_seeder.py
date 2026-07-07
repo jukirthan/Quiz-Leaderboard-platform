@@ -1,18 +1,23 @@
+import os
+
 from app.extensions import db, bcrypt
-from app.models.user import User, RoleEnum
+from app.models.user import User
+
+DEFAULT_ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+DEFAULT_ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@gmail.com")
+DEFAULT_ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 
 def seed_admin():
-    if User.query.filter_by(role=RoleEnum.admin).first():
-        return
-
-    admin = User(
-        username="admin",
-        email="admin@quizhub.com",
-        password=bcrypt.generate_password_hash("admin123").decode("utf-8"),
-        role=RoleEnum.admin,
-        is_active=True,
-    )
-    db.session.add(admin)
+    exists = User.query.filter_by(email=DEFAULT_ADMIN_EMAIL).first()
+    if not exists:
+        hashed_password = bcrypt.generate_password_hash(DEFAULT_ADMIN_PASSWORD).decode("utf-8")
+        admin = User(
+            username=DEFAULT_ADMIN_USERNAME,
+            email=DEFAULT_ADMIN_EMAIL,
+            password=hashed_password,
+            role="admin"
+        )
+        db.session.add(admin)
     db.session.commit()
-    print("Admin user created: admin@quizhub.com / admin123")
+    print("Admin seeded successfully")
