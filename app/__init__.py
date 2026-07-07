@@ -13,7 +13,13 @@ def create_app(config_class=Config):
     db.init_app(app)
     jwt.init_app(app)
     bcrypt.init_app(app)
-    cors.init_app(app)
+    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+
+    from app.models.user import User
+
+    @jwt.user_lookup_loader
+    def load_user(_jwt_header, jwt_payload):
+        return User.query.get(int(jwt_payload["sub"]))
 
     register_blueprints(app)
     register_error_handlers(app)
