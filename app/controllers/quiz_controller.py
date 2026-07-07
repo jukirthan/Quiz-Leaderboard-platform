@@ -1,110 +1,96 @@
-from flask import request, jsonify
-from flask_jwt_extended import get_jwt_identity
 from app.extensions import db
-from app.models.user import User
-from app.models.quiz import Quiz
+from app.models.quiz import Quiz, Question
+from app.models.category import Category
+from app.utils import success_response, error_response, shuffle_list
 
 
-def _current_user():
-    return User.query.get(get_jwt_identity())
+def create_quiz(data, user_id):
+    title = data.get("title")
+    category_id = data.get("category_id")
+    questions = data.get("questions", [])
+
+    if not title or not category_id:
+        return error_response("title and category_id are required")
+
+    if not Category.query.get(category_id):
+        return error_response("Category not found", 404)
+
+    if len(questions) == 0:
+        return error_response("At least one question is required")
+
+    quiz = Quiz(
+        title=title,
+        description=data.get("description", ""),
+        category_id=category_id,
+        creator_id=user_id,
+        time_limit=data.get("time_limit", 0),
+        shuffle_questions=data.get("shuffle_questions", False)
+    )
+    db.session.add(quiz)
+    db.session.flush()
+
+    for q in questions:
+        question = Question(
+            question_text=q.get("question_text"),
+            option_a=q.get("option_a"),
+            option_b=q.get("option_b"),
+            option_c=q.get("option_c"),
+            option_d=q.get("option_d"),
+            correct_option=q.get("correct_option", "").lower(),
+            quiz_id=quiz.id
+        )
+        db.session.add(question)
+
+    db.session.commit()
+
+    return success_response("Quiz created successfully", quiz.to_dict(), 201)
 
 
-def list_quizzes():
-    category_id = request.args.get("category_id", type=int)
-    search = request.args.get("search", "").strip()
-
-    query = Quiz.query.filter_by(is_public=True)
-    if category_id:
-        query = query.filter_by(category_id=category_id)
-    if search:
-        query = query.filter(Quiz.title.ilike(f"%{search}%"))
-
-    quizzes = query.order_by(Quiz.created_at.desc()).all()
-    return jsonify([q.to_dict() for q in quizzes]), 200
+def get_all_quizzes():
+    quizzes = Quiz.query.order_by(Quiz.created_at.desc()).all()
+    return success_response("Quizzes fetched", [q.to_dict() for q in quizzes])
 
 
 def get_quizzes_by_category(category_id):
-    from app.models.category import Category
-    Category.query.get_or_404(category_id)
-    quizzes = (
-        Quiz.query.filter_by(category_id=category_id, is_public=True)
-        .order_by(Quiz.created_at.desc())
-        .all()
-    )
-    return jsonify([q.to_dict() for q in quizzes]), 200
+    if not Category.query.get(category_id):
+        return error_response("Category not found", 404)
+
+    quizzes = Quiz.query.filter_by(category_id=category_id).order_by(Quiz.created_at.desc()).all()
+    return success_response("Quizzes fetched", [q.to_dict() for q in quizzes])
 
 
-def get_quiz(quiz_id):
-    quiz = Quiz.query.get_or_404(quiz_id)
-    user = _current_user_optional()
-    include_answers = user and (user.role.value == "admin" or quiz.creator_id == user.id)
-    data = quiz.to_dict()
-    data["questions"] = []
-    for q in quiz.questions:
-        qdata = q.to_dict(include_answer=include_answers)
-        if not include_answers:
-            qdata["options"] = q.options_for_play()
-        data["questions"].append(qdata)
-    return jsonify(data), 200
+def get_quiz_for_attempt(quiz_id):
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        return error_response("Quiz not found", 404)
+
+    questions = [q.to_dict() for q in quiz.questions]
+    if quiz.shuffle_questions:
+        questions = shuffle_list(questions)
+
+    result = quiz.to_dict()
+    result["questions"] = questions
+
+    return success_response("Quiz fetched", result)
 
 
-def _current_user_optional():
-    try:
-        from flask_jwt_extended import verify_jwt_in_request
-        verify_jwt_in_request(optional=True)
-        return User.query.get(get_jwt_identity())
-    except Exception:
-        return None
+def get_quiz_detail(quiz_id):
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        return error_response("Quiz not found", 404)
 
+    result = quiz.to_dict()
+    result["questions"] = [q.to_dict(show_answer=True) for q in quiz.questions]
 
-def create_quiz():
-    user = _current_user()
-    data = request.get_json() or {}
-
-    title = data.get("title", "").strip()
-    if not title:
-        return jsonify({"error": "title is required"}), 400
-
-    quiz = Quiz(
-        creator_id=user.id,
-        title=title,
-        description=data.get("description", ""),
-        category_id=data.get("category_id"),
-        time_limit=data.get("time_limit"),
-        is_public=data.get("is_public", False),
-    )
-    db.session.add(quiz)
-    db.session.commit()
-    return jsonify(quiz.to_dict()), 201
-
-
-def update_quiz(quiz_id):
-    quiz = Quiz.query.get_or_404(quiz_id)
-    data = request.get_json() or {}
-
-    if "title" in data:
-        quiz.title = data["title"].strip()
-    if "description" in data:
-        quiz.description = data["description"]
-    if "category_id" in data:
-        quiz.category_id = data["category_id"]
-    if "time_limit" in data:
-        quiz.time_limit = data["time_limit"]
-    if "is_public" in data:
-        quiz.is_public = data["is_public"]
-
-    db.session.commit()
-    return jsonify(quiz.to_dict_with_questions(include_answers=True)), 200
+    return success_response("Quiz fetched", result)
 
 
 def delete_quiz(quiz_id):
-    quiz = Quiz.query.get_or_404(quiz_id)
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        return error_response("Quiz not found", 404)
+
     db.session.delete(quiz)
     db.session.commit()
-    return jsonify({"message": "Quiz deleted"}), 200
 
-
-def my_quizzes():
-    user = _current_user()
-    quizzes = Quiz.query.filter_by(creator_id=user.id).order_by(Quiz.created_at.desc()).all()
-    return jsonify([q.to_dict() for q in quizzes]), 200
+    return success_response("Quiz deleted successfully")
