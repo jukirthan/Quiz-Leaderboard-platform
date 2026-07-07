@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 
 from app.config import Config
-from app.extensions import db, jwt
+from app.extensions import db, jwt, bcrypt
 from app.routes import register_blueprints
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
@@ -11,6 +11,7 @@ def create_app():
     app.config.from_object(Config)
     db.init_app(app)
     jwt.init_app(app)
+    bcrypt.init_app(app)
 
     from app.models import category, quiz,quiz_attempt, User 
 
